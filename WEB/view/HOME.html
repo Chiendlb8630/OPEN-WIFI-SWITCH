@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý Công Tắc Wifi</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #4e54c8;
+      --secondary-color: #8f94fb;
+      --bg-color: #f1f2f6;
+      --card-bg: #ffffff;
+      --text-color: #2f3542;
+      --success-color: #2ed573;
+      --danger-color: #ff4757;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* --- Header --- */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 15px 20px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      flex-wrap: wrap;
+    }
+
+    .app-title {
+      font-weight: 700;
+      color: var(--primary-color);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .digital-clock {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-color);
+      background: #dfe4ea;
+      padding: 5px 15px;
+      border-radius: 10px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* --- Device Card --- */
+    .device-card {
+      background: white;
+      border-radius: 20px;
+      border: none;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .device-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(78, 84, 200, 0.15);
+    }
+
+    .card-header-custom {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .device-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .channel-list { padding: 10px 20px 20px; }
+    .channel-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #f1f2f6;
+    }
+    .channel-info { display: flex; align-items: center; gap: 8px; }
+    .channel-name { font-weight: 500; color: #57606f; }
+
+    .btn-timer {
+      border: none; background: none; color: #a4b0be; transition: color 0.3s; position: relative;
+    }
+    .btn-timer:hover, .btn-timer.active { color: #ffa502; }
+    
+    .timer-indicator {
+      position: absolute; top: 0; right: -2px; width: 8px; height: 8px;
+      background-color: var(--danger-color); border-radius: 50%; display: none;
+    }
+    .btn-timer.active .timer-indicator { display: block; }
+
+    .form-switch .form-check-input {
+      width: 3.5em; height: 1.75em; cursor: pointer;
+      background-color: #dfe4ea; border-color: #dfe4ea;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23a4b0be'/%3e%3c/svg%3e");
+    }
+    .form-switch .form-check-input:checked {
+      background-color: var(--success-color); border-color: var(--success-color);
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+    }
+    
+    .btn-add-device {
+      background-color: var(--primary-color); color: white; border-radius: 50px;
+      padding: 10px 25px; font-weight: 600; border: none; display: flex; align-items: center; gap: 8px; transition: all 0.3s;
+    }
+    .btn-add-device:hover { background-color: #3c40c6; transform: scale(1.05); color: white; }
+
+    .btn-delete {
+      background: rgba(255, 255, 255, 0.2); border: none; color: white; width: 30px; height: 30px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-delete:hover { background: rgba(255, 71, 87, 0.8); }
+
+    /* Animation cho icon tìm thấy */
+    .fa-beat { animation: fa-beat 1s infinite linear; }
+    @keyframes fa-beat {
+      0% {transform:scale(1);} 30% {transform:scale(1.2);} 100% {transform:scale(1);}
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header container">
+    <h3 class="app-title"><i class="fas fa-wifi"></i> OPEN SWITCH</h3>
+    <div class="digital-clock" id="clockDisplay">00:00:00</div>
+    <button class="btn-add-device shadow" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
+      <i class="fas fa-plus-circle"></i> Thêm Công Tắc
+    </button>
+  </header>
+
+  <div class="container">
+    <div class="row g-4" id="switchContainer">
+      </div>
+  </div>
+
+  <div class="modal fade" id="discoveryModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-center">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <i class="fas fa-search-location fa-3x text-primary fa-beat"></i>
+          </div>
+          <h4 class="fw-bold">Phát hiện thiết bị mới!</h4>
+          <p class="text-muted">Mã MAC: <span id="discoveredMac" class="fw-bold text-dark">--</span></p>
+          <div class="d-flex justify-content-center gap-3 mt-4">
+            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Bỏ qua</button>
+            <button type="button" class="btn btn-success px-4" onclick="acceptNewDevice()">
+              <i class="fas fa-check"></i> Thêm ngay
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="addDeviceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Thêm Công Tắc Mới</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addDeviceForm">
+             <input type="hidden" id="deviceMacAddress"> 
+             
+             <div class="mb-3">
+                <label class="form-label text-muted small">Mã thiết bị (MAC)</label>
+                <input type="text" class="form-control bg-light" id="displayMac" placeholder="Nhập thủ công hoặc chờ phát hiện..." required>
+             </div>
+
+            <div class="mb-3">
+              <label for="deviceName" class="form-label">Tên thiết bị</label>
+              <input type="text" class="form-control" id="deviceName" required placeholder="Nhập tên...">
+            </div>
+            <div class="mb-3">
+              <label for="deviceChannels" class="form-label">Số lượng kênh</label>
+              <input type="number" class="form-control" id="deviceChannels" value="3" min="1" max="4">
+            </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">Lưu Thiết Bị</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="timerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold"><i class="fas fa-clock text-warning"></i> Hẹn Giờ: <span id="timerChannelName"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="timerDeviceId">
+          <input type="hidden" id="timerChannelIndex">
+
+          <div class="mb-3">
+            <label class="form-label text-success fw-bold">Thời gian BẬT:</label>
+            <input type="time" class="form-control" id="timeOnInput">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-danger fw-bold">Thời gian TẮT:</label>
+            <input type="time" class="form-control" id="timeOffInput">
+          </div>
+
+          <div class="alert alert-info small">
+            <i class="fas fa-info-circle"></i> Hệ thống sẽ tự động Bật/Tắt và gửi lệnh JSON.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="clearTimer()">Xóa Hẹn Giờ</button>
+          <button type="button" class="btn btn-primary" onclick="saveTimer()">Lưu Cài Đặt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // --- KẾT NỐI SOCKET.IO ---
+    const socket = io(); 
+
+    let devices = []; // Dữ liệu sẽ được load từ Server
+
+    // Khởi tạo các Modal
+    const discoveryModal = new bootstrap.Modal(document.getElementById('discoveryModal'));
+    const addDeviceModal = new bootstrap.Modal(document.getElementById('addDeviceModal'));
+    const timerModalInstance = new bootstrap.Modal(document.getElementById('timerModal'));
+    const container = document.getElementById('switchContainer');
+    let currentFoundMac = "";
+
+    // --------------------------------------------------------
+    // LẮNG NGHE SỰ KIỆN TỪ SERVER
+    // --------------------------------------------------------
+
+    // 1. Nhận danh sách thiết bị khi mới vào
+    socket.on('init_data', (data) => {
+        devices = data;
+        renderDevices();
+    });
+
+    // 2. Nhận cập nhật trạng thái switch (Real-time)
+    socket.on('update_switch', (data) => {
+        const { deviceId, channelIndex, status } = data;
+        const device = devices.find(d => d.id === deviceId);
+        if (device && device.channels[channelIndex]) {
+            device.channels[channelIndex].status = status;
+            
+            // Cập nhật giao diện mà không render lại toàn bộ (tối ưu)
+            const checkbox = document.getElementById(`sw-${deviceId}-${channelIndex}`);
+            if (checkbox) checkbox.checked = (status === 1);
+        }
+    });
+
+    // 3. Phát hiện thiết bị mới
+    socket.on('new_device_found', (data) => {
+        // Chỉ hiện nếu modal chưa hiện
+        const modalEl = document.getElementById('discoveryModal');
+        if (!modalEl.classList.contains('show')) {
+            currentFoundMac = data.mac;
+            document.getElementById('discoveredMac').innerText = currentFoundMac;
+            discoveryModal.show();
+        }
+    });
+
+    // --------------------------------------------------------
+    // CÁC HÀM XỬ LÝ LOGIC UI
+    // --------------------------------------------------------
+
+    function renderDevices() {
+      container.innerHTML = ''; 
+      if (devices.length === 0) {
+        container.innerHTML = `<div class="col-12 text-center text-muted mt-5">Chưa có công tắc nào. Hãy chờ thiết bị mới...</div>`;
+        return;
+      }
+
+      devices.forEach((device) => {
+        let channelsHTML = '';
+        device.channels.forEach((ch, chIndex) => {
+          const hasTimer = ch.timeOn || ch.timeOff;
+          const timerActiveClass = hasTimer ? 'active' : '';
+          
+          channelsHTML += `
+            <div class="channel-item">
+              <div class="channel-info">
+                <i class="fas fa-plug text-muted"></i>
+                <span class="channel-name">Kênh ${chIndex + 1}</span>
+                <button class="btn-timer ms-2 ${timerActiveClass}"
+                  onclick="openTimerModal('${device.id}', ${chIndex})"
+                  title="Cài đặt hẹn giờ">
+                  <i class="fas fa-clock"></i>
+                  <span class="timer-indicator"></span>
+                </button>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sw-${device.id}-${chIndex}"
+                  ${ch.status === 1 ? 'checked' : ''} 
+                  onchange="toggleSwitch('${device.id}', ${chIndex}, this)">
+              </div>
+            </div>
+          `;
+        });
+
+        const cardHTML = `
+          <div class="col-md-6 col-lg-4">
+            <div class="device-card">
+              <div class="card-header-custom">
+                <span class="device-name"><i class="fas fa-server me-2"></i> ${device.name}</span>
+                <button class="btn-delete" title="Xóa thiết bị" onclick="deleteDevice('${device.id}')">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+              <div class="channel-list">
+                ${channelsHTML}
+              </div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += cardHTML;
+      });
+    }
+
+    // --- GỬI API ĐIỀU KHIỂN (JSON FORMAT ĐƯỢC XỬ LÝ Ở BACKEND) ---
+    window.toggleSwitch = function(deviceId, channelIndex, checkbox) {
+      const status = checkbox.checked ? 1 : 0;
+      
+      fetch('/api/switch/control', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceId, channelIndex, status })
+      }).catch(err => {
+          console.error("Lỗi gửi lệnh:", err);
+          checkbox.checked = !checkbox.checked; // Revert nếu lỗi
+      });
+    }
+
+    // --- XỬ LÝ THÊM THIẾT BỊ ---
+    function acceptNewDevice() {
+        discoveryModal.hide();
+        document.getElementById('deviceMacAddress').value = currentFoundMac;
+        document.getElementById('displayMac').value = currentFoundMac;
+        document.getElementById('displayMac').disabled = true; // Khóa lại
+        addDeviceModal.show();
+    }
+
+    document.getElementById('addDeviceForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Ưu tiên lấy từ input ẩn (nếu từ discovery), nếu không lấy input hiện (nhập tay)
+      let mac = document.getElementById('deviceMacAddress').value;
+      if (!mac) mac = document.getElementById('displayMac').value;
+
+      const name = document.getElementById('deviceName').value;
+      const channels = parseInt(document.getElementById('deviceChannels').value) || 3;
+      
+      if (!mac) { alert("Thiếu địa chỉ MAC!"); return; }
+
+      const newDevice = {
+        id: mac,
+        name: name,
+        channels: Array(channels).fill({ status: 0, timeOn: '', timeOff: '' })
+      };
+
+      fetch('/api/devices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newDevice)
+      }).then(res => res.json()).then(data => {
+          if(data.success) {
+            addDeviceModal.hide();
+            document.getElementById('addDeviceForm').reset();
+            document.getElementById('displayMac').disabled = false;
+          } else {
+            alert(data.message);
+          }
+      });
+    });
+
+    window.deleteDevice = function(id) {
+      if(confirm('Bạn có chắc muốn xóa công tắc này không?')) {
+         fetch(`/api/devices/${id}`, { method: 'DELETE' });
+      }
+    }
+
+    // --- XỬ LÝ HẸN GIỜ ---
+    function openTimerModal(deviceId, channelIndex) {
+      const device = devices.find(d => d.id === deviceId);
+      if(!device) return;
+      const channel = device.channels[channelIndex];
+
+      document.getElementById('timerChannelName').innerText = `${device.name} - Kênh ${channelIndex + 1}`;
+      document.getElementById('timerDeviceId').value = deviceId;
+      document.getElementById('timerChannelIndex').value = channelIndex;
+      document.getElementById('timeOnInput').value = channel.timeOn || '';
+      document.getElementById('timeOffInput').value = channel.timeOff || '';
+      timerModalInstance.show();
+    }
+
+    function saveTimer() {
+      const devId = document.getElementById('timerDeviceId').value;
+      const chIndex = document.getElementById('timerChannelIndex').value;
+      const timeOn = document.getElementById('timeOnInput').value;
+      const timeOff = document.getElementById('timeOffInput').value;
+
+      fetch('/api/timer/set', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceId: devId, channelIndex: chIndex, timeOn, timeOff })
+      }).then(res => res.json()).then(data => {
+          if(data.success) timerModalInstance.hide();
+      });
+    }
+
+    function clearTimer() {
+      document.getElementById('timeOnInput').value = '';
+      document.getElementById('timeOffInput').value = '';
+      saveTimer();
+    }
+
+    // Đồng hồ
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clockDisplay').textContent = now.toLocaleTimeString('en-GB');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+  </script>
+</body>
+</html>

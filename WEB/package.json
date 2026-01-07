@@ -1,0 +1,22 @@
+{
+  "name": "wifi-switch-manager",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node sever.js",
+    "dev": "nodemon server.js --ignore data.json"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "firebase": "^10.13.1",
+    "firebase-admin": "^12.4.0",
+    "mqtt": "^5.14.1",
+    "node-schedule": "^2.1.1",
+    "socket.io": "^4.8.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

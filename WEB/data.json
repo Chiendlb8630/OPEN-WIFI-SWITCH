@@ -1,0 +1,25 @@
+{
+  "devices": [
+    {
+      "id": "A6CF12C5987F",
+      "name": "Phòng bếp",
+      "channels": [
+        {
+          "status": 1,
+          "timeOn": "",
+          "timeOff": ""
+        },
+        {
+          "status": 1,
+          "timeOn": "",
+          "timeOff": ""
+        },
+        {
+          "status": 0,
+          "timeOn": "",
+          "timeOff": ""
+        }
+      ]
+    }
+  ]
+}
