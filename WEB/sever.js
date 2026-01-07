@@ -12,9 +12,9 @@ const cors = require('cors');
 const PORT = 3000;
 
 // THÔNG TIN MQTT CỦA BẠN
-const MQTT_BROKER_HOST = 'd6a721cd5a254421a2b876af2e91c31d.s1.eu.hivemq.cloud';
-const MQTT_USERNAME = 'Chiendlb';     
-const MQTT_PASSWORD = 'Chiendlb456'; 
+const MQTT_BROKER_HOST = ;
+const MQTT_USERNAME = ;     
+const MQTT_PASSWORD = ; 
 
 // CẤU HÌNH TOPIC MỚI THEO YÊU CẦU
 // Topic điều khiển sẽ là: swDevice/MAC
