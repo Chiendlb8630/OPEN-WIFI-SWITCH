@@ -1,0 +1,81 @@
+# OPEN-WIFI-SWITCH 🔌
+
+![Project Status](https://img.shields.io/badge/status-active-brightgreen)
+![Platform](https://img.shields.io/badge/platform-ESP32%20%7C%20ESP8266-blue)
+![License](https://img.shields.io/badge/license-MIT-orange)
+
+## 📖 Giới thiệu (Introduction)
+
+**OPEN-WIFI-SWITCH** là dự án mã nguồn mở nhằm phát triển thiết bị công tắc thông minh kết nối WiFi. Thiết bị cho phép người dùng điều khiển bật/tắt các thiết bị điện từ xa thông qua [App điện thoại / Web Interface / MQTT / Home Assistant].
+
+Dự án này được thiết kế để dễ dàng tích hợp vào các hệ thống Smart Home hiện đại với chi phí thấp và độ ổn định cao.
+
+## 🚀 Tính năng nổi bật (Features)
+
+* [x] Điều khiển bật/tắt qua WiFi (Local & Internet).
+* [x] Hỗ trợ giao thức MQTT để kết nối với Home Assistant/Node-RED.
+* [x] Chế độ thiết lập thông minh (Smart Config / Access Point Mode).
+* [x] OTA (Over-the-Air) Update - Cập nhật firmware từ xa.
+* [x] Lưu trạng thái khi mất điện.
+* [ ] Lên lịch hẹn giờ (Schedule).
+
+## 🛠️ Phần cứng (Hardware Required)
+
+Danh sách các linh kiện cần thiết để xây dựng phần cứng:
+
+* **Vi điều khiển:** [ESP32 / ESP8266 / STM32...]
+* **Relay:** [Module Relay 5V/12V]
+* **Nguồn:** [AC-DC 5V Converter]
+* **Cảm biến (nếu có):** [Nút nhấn vật lý, Cảm biến dòng điện...]
+
+## 💻 Cài đặt & Nạp code (Installation & Flashing)
+
+### Yêu cầu phần mềm
+* [ESP-IDF v4.x / Arduino IDE / PlatformIO]
+* Driver USB-to-UART (CP210x / CH340).
+
+### Hướng dẫn Build
+1.  Clone dự án về máy:
+    ```bash
+    git clone [https://github.com/Chiendlb8630/OPEN-WIFI-SWITCH.git](https://github.com/Chiendlb8630/OPEN-WIFI-SWITCH.git)
+    cd OPEN-WIFI-SWITCH
+    ```
+
+2.  Cấu hình Menuconfig (nếu dùng ESP-IDF):
+    ```bash
+    idf.py menuconfig
+    ```
+    *Chỉnh sửa các thông số WiFi SSID, Password, MQTT Broker tại đây.*
+
+3.  Biên dịch và nạp code:
+    ```bash
+    idf.py build flash monitor
+    ```
+    *(Hoặc bấm Upload nếu dùng Arduino IDE)*
+
+## 🔌 Sơ đồ đấu nối (Wiring Diagram)
+
+| ESP32 GPIO | Kết nối tới | Ghi chú |
+| :--- | :--- | :--- |
+| GPIO 2 | LED Status | Đèn báo trạng thái |
+| GPIO 4 | Relay | Chân kích Relay |
+| GPIO 0 | Button | Nút nhấn Boot/Config |
+| ... | ... | ... |
+
+*(Bạn có thể chèn hình ảnh sơ đồ mạch vào thư mục `docs/` và link vào đây)*
+
+## 👥 Nhóm tác giả (Authors)
+
+Dự án được thực hiện bởi:
+
+* **[Tên của bạn]** - *Main Developer*
+* **[Tên thành viên 2]** - *Hardware Design*
+* **[Tên thành viên 3]** - *Web App*
+
+## 🤝 Đóng góp (Contributing)
+
+Mọi đóng góp đều được hoan nghênh! Vui lòng tạo Pull Request hoặc mở Issue để báo lỗi.
+
+## 📄 Bản quyền (License)
+
+Dự án này được phân phối dưới giấy phép [MIT License](LICENSE).
